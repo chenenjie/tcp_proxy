@@ -1,0 +1,11 @@
+[package]
+name = "tcp_proxy"
+version = "0.1.0"
+authors = ["chenej <chenej@gzyitop.com>"]
+
+[dependencies]
+futures = "*"
+tokio-core = "*"
+tokio-io   = "*"
+error-chain = "*"
+
