@@ -1,9 +1,8 @@
 extern crate tcp_proxy; 
 
-use tcp_proxy::serve;
+use tcp_proxy::run;
 
 
 fn main(){
-    serve();
-
+    run();
 }

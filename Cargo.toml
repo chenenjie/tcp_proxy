@@ -8,4 +8,7 @@ futures = "*"
 tokio-core = "*"
 tokio-io   = "*"
 error-chain = "*"
+toml = "*"
+serde = "*"
+serde_derive = "*"
 
