@@ -11,4 +11,8 @@ error-chain = "*"
 toml = "*"
 serde = "*"
 serde_derive = "*"
+uuid = {version = "*", features = ["v4", "v5"]}
 
+
+[lib]
+name = "tcp_proxy"

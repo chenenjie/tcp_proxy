@@ -9,6 +9,7 @@ extern crate toml;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
+extern crate uuid;
 
 
 use tokio_core::reactor::{Core, Handle};
@@ -24,7 +25,10 @@ use std::env;
 use std::collections::HashMap;
 use std::fs::File;
 
-mod proxy {
+mod transfer;
+
+
+pub mod proxy {
     error_chain!{
         types {
             Error, ErrorKind, ResultExt, Result;
@@ -67,7 +71,7 @@ pub fn run(){
         }
 
         for handle in handles {
-            handle.join();
+            handle.join().unwrap();
         }
     }
 
