@@ -26,6 +26,7 @@ use std::collections::HashMap;
 use std::fs::File;
 
 mod transfer;
+mod server;
 
 
 pub mod proxy {
