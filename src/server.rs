@@ -4,7 +4,7 @@ use proxy;
 use std::io::ErrorKind;
 use tokio_core::net::TcpStream;
 use tokio_core::reactor::Core;
-use tokio_io::io::{copy, write_all };
+use tokio_io::io::{copy, write_all};
 use tokio_io::AsyncRead;
 use futures::Future;
 

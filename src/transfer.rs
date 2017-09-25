@@ -1,7 +1,7 @@
 
 use proxy;
 
-use tokio_io::io::{copy, read_exact };
+use tokio_io::io::{copy, read_exact, write_all};
 use tokio_core::reactor::Core;
 use tokio_core::net::TcpListener;
 use tokio_io::AsyncRead;
@@ -15,6 +15,8 @@ use std::io::{ErrorKind, Error};
 use std::borrow::Borrow;
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::sync::mpsc::Receiver;
+use std::cell::Ref;
 
 pub fn trans() -> proxy::Result<()> {
     let mut core = Core::new().unwrap();
@@ -29,11 +31,16 @@ pub fn trans() -> proxy::Result<()> {
     let id_input_map = Rc::new(RefCell::new(HashMap::new()));
     let map_mirror = id_input_map.clone();
 
-    let server = listener.incoming().for_each(move |(stream, peer_addr)| {
+    let (sender, receiver) = channel();
+    let receiver = Rc::new(receiver);
+
+    let server = listener.incoming().for_each(|(stream, peer_addr)| {
         let check = read_exact(stream, [0u8 ;2]);
         let map = map_mirror.clone();
         let handle1 = handle.clone();
-        let deal = check.map(|(stream, buf)| (stream, buf, map)).and_then(move |(stream, buf, map)|{
+        let sender = sender.clone();
+        let receiver = receiver.clone();
+        let deal = check.and_then(move |(stream, buf)|{
             match buf[0]{
                 0 => { 
                     println!("client stream");
@@ -44,15 +51,18 @@ pub fn trans() -> proxy::Result<()> {
                     tx.send(stream);
 
                     map.borrow_mut().insert(format!("{}", stream_id), rx);
+
+                    sender.send(format!("{}&{}", stream_id, "127.0.0.1:8080"));
                 }, 
                 1 => {
                     match buf[1] {
                         0 => {
                             println!("server main stream");
                             loop {
-                                //let signal = receiver.recv().unwrap();
+                                let signal = receiver.recv().unwrap();
                                 //发完地址,端口和标识id就完成了
-
+                                let req = write_all(stream, signal).then(|_|Ok(()));
+                                handle1.spawn(req);
                             }
                         },
                         1 => {
@@ -100,6 +110,7 @@ pub fn trans() -> proxy::Result<()> {
         Ok(())
 
     });
+    //map_mirror.borrow_mut().get("fjek");
     core.run(server).map_err(From::from)
 }
 
