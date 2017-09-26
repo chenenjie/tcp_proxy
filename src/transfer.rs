@@ -17,6 +17,8 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::mpsc::Receiver;
 use std::cell::Ref;
+use tokio_io::AsyncWrite;
+use futures::Poll;
 
 pub fn trans() -> proxy::Result<()> {
     let mut core = Core::new().unwrap();
@@ -58,11 +60,17 @@ pub fn trans() -> proxy::Result<()> {
                     match buf[1] {
                         0 => {
                             println!("server main stream");
+                            let (_reader, writer) = stream.split();
                             loop {
                                 let signal = receiver.recv().unwrap();
                                 //发完地址,端口和标识id就完成了
-                                let req = write_all(stream, signal).then(|_|Ok(()));
-                                handle1.spawn(req);
+                                let chief_handle = ChiefHandle{
+                                    writer: writer,
+                                    buffer: signal, 
+                                };
+
+
+                                handle1.spawn(chief_handle.map(|_| Ok(())));
                             }
                         },
                         1 => {
@@ -112,6 +120,23 @@ pub fn trans() -> proxy::Result<()> {
     });
     //map_mirror.borrow_mut().get("fjek");
     core.run(server).map_err(From::from)
+}
+
+
+struct ChiefHandle<W>{
+    writer: AsyncWrite<T>,
+    buffer: String, 
+}
+
+impl Future for ChiefHandle<T> {
+
+    type Item = usize;
+
+    type Error = Error;
+
+    fn poll(&mut self) -> Poll<Self::Item, Self::Error>{
+        self.writer.write_buf(self.buffer)
+    }
 }
 
 
