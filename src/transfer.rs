@@ -18,7 +18,8 @@ use std::rc::Rc;
 use std::sync::mpsc::Receiver;
 use std::cell::Ref;
 use tokio_io::AsyncWrite;
-use futures::Poll;
+use std::io::Cursor;
+use futures::{Poll, Async};
 
 pub fn trans() -> proxy::Result<()> {
     let mut core = Core::new().unwrap();
@@ -54,24 +55,25 @@ pub fn trans() -> proxy::Result<()> {
 
                     map.borrow_mut().insert(format!("{}", stream_id), rx);
 
-                    sender.send(format!("{}&{}", stream_id, "127.0.0.1:8080"));
+                    sender.send(format!("{}&{}\n", stream_id, "127.0.0.1:8080"));
                 }, 
                 1 => {
                     match buf[1] {
                         0 => {
                             println!("server main stream");
                             let (_reader, writer) = stream.split();
-                            loop {
-                                let signal = receiver.recv().unwrap();
-                                //发完地址,端口和标识id就完成了
-                                let chief_handle = ChiefHandle{
-                                    writer: writer,
-                                    buffer: signal, 
-                                };
 
+                            let chief_handle = ChiefHandle{
+                                writer: writer,
+                                receiver: receiver, 
+                            };
 
-                                handle1.spawn(chief_handle.map(|_| Ok(())));
-                            }
+                            let chief_handle = chief_handle.for_each(|text| {
+                                Ok(())
+                            }).then(|_|Ok(()));
+
+                            handle1.spawn(chief_handle);
+
                         },
                         1 => {
                             println!("server bussiness stream");
@@ -123,19 +125,20 @@ pub fn trans() -> proxy::Result<()> {
 }
 
 
-struct ChiefHandle<W>{
-    writer: AsyncWrite<T>,
-    buffer: String, 
+struct ChiefHandle<T: AsyncWrite>{
+    writer: T,
+    receiver: Rc<Receiver<String>>, 
 }
 
-impl Future for ChiefHandle<T> {
 
+impl<T: AsyncWrite> Stream for ChiefHandle<T> {
     type Item = usize;
-
     type Error = Error;
 
-    fn poll(&mut self) -> Poll<Self::Item, Self::Error>{
-        self.writer.write_buf(self.buffer)
+    fn poll(&mut self) -> Poll<Option<Self::Item>, Self::Error>{
+        let text = self.receiver.recv().unwrap();
+        let mut buf = Cursor::new(text);
+        self.writer.write_buf(&mut buf).map(|async| async.map(Some))
     }
 }
 
