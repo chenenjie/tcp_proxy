@@ -12,6 +12,7 @@ toml = "*"
 serde = "*"
 serde_derive = "*"
 uuid = {version = "*", features = ["v4", "v5"]}
+futures-cpupool = "*"
 
 
 [lib]
