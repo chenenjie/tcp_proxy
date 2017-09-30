@@ -10,6 +10,8 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate uuid;
+extern crate bytes;
+extern crate tokio_service;
 
 
 use tokio_core::reactor::{Core, Handle};
