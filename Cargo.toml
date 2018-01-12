@@ -4,17 +4,6 @@ version = "0.1.0"
 authors = ["chenej <chenej@gzyitop.com>"]
 
 [dependencies]
-futures = "*"
-tokio-core = "*"
-tokio-io   = "*"
-tokio-service = "*"
-error-chain = "*"
-toml = "*"
-serde = "*"
-serde_derive = "*"
-uuid = {version = "*", features = ["v4", "v5"]}
-futures-cpupool = "*"
-bytes = "*"
 
 
 [lib]
