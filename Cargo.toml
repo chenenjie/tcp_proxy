@@ -4,6 +4,9 @@ version = "0.1.0"
 authors = ["chenej <chenej@gzyitop.com>"]
 
 [dependencies]
+failure = "0.1.1"
+toml = "0.4.5"
+
 
 
 [lib]
